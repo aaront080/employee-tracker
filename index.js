@@ -1,5 +1,5 @@
 const inquirer = require('inquirer');
-const console = require('console.table');
+const cTable = require('console.table');
 const mysql = require('mysql');
 
 const connection = mysql.createConnection({
@@ -98,7 +98,7 @@ addDepartment = () => {
         {
             type: 'input',
             name: 'newDepartment',
-            message: 'Please add a new department';
+            message: 'Please add a new department',
         }
     ])
     .then((response) => {
@@ -109,4 +109,48 @@ addDepartment = () => {
             queryDepartments();
         })
     })
+}
+
+addRole = () => {
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'role',
+            message: 'Please enter the role you would like to add.',
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: 'What is the salary for this new role',
+        }
+    ]).then((answer) => {
+       const params = [answer.role, answer.salary];
+       const roleQuery = `SELECT name, id FROM department`;
+       connection.promise().query(roleQuery, (err, data) => {
+        if (err) throw err;
+
+        const dept = data.map(({ name, id }) => ({ name: name, value: id}));
+        inquirer.prompt([
+        {
+            type: 'list',
+            name: 'dept',
+            message: 'Please select a department for this role.',
+            choices: dept
+        }
+        ])
+        .then(deptChoice => {
+            const dept = deptChoice.dept;
+            params.push(dept);
+            const newQuery = `INSERT INTO role (title, salary, department_id)
+                            VALUES (?, ?, ?)`;
+
+            connection.query(newQuery, params, (err, result) => {
+                if (err) throw err;
+                console.log(answer.role + " has been added.");
+
+                queryRoles();
+            })
+        })
+       })
+    })}
 }
