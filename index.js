@@ -63,3 +63,50 @@ queryDepartments = () => {
         userOptions();
     })
 };
+
+queryRole = () => {
+    console.log('Now viewing all roles:\n');
+    const sql = `SELECT roles.id, roles.title, department.department_name AS department
+    FROM roles INNER JOIN department ON roles.department_id = department.id`;
+    connection.query(sql, (err, response) => {
+        if (err) throw (err);
+        console.table(response);
+        userOptions();
+    })
+};
+
+queryEmployees = () => {
+    console.log('Now viewing all employees:\n');
+    const sql = `SELECT employee.id,
+                employee.first_name,
+                employee.last_name,
+                roles.title,
+                department.department_name AS 'department',
+                roles.salary FROM employee, roles, department
+                WHERE department.id = roles.department_id
+                AND roles.id = employee.role_id
+                ORDER BY employee.id ASC`;
+    connection.query(sql, (err, response) => {
+        if (err) throw (err);
+        console.table(response);
+        userOptions();
+    })                
+;}
+
+addDepartment = () => {
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'newDepartment',
+            message: 'Please add a new department';
+        }
+    ])
+    .then((response) => {
+        let sql = `INSERT INTO department (department_name) VALUES (?)`;
+        connection.query(sql, answer.newDepartment, (err, response) => {
+            if (err) throw err;
+            console.log(answer.newDepartment + " department has been added!");
+            queryDepartments();
+        })
+    })
+}
