@@ -11,7 +11,9 @@ CREATE TABLE roles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(30) NOT NULL,
     salary DECIMAL(10,2) NOT NULL,
-    department_id INT NOT NULL
+    department_id INT NOT NULL,
+    FOREIGN KEY (department_id)
+    PRIMARY KEY department(id)
 );
 
 CREATE TABLE employee (
@@ -20,4 +22,8 @@ CREATE TABLE employee (
     last_name VARCHAR(30) NOT NULL,
     role_id INT NOT NULL,
     manager_id INT 
+    FOREIGN KEY (role_id)
+    PRIMARY KEY roles(id)
+    FOREIGN KEY (manager_id)
+    FOREIGN KEY employee(id)
 );
