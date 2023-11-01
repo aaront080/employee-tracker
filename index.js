@@ -38,7 +38,6 @@ const userOptions = () =>{
     ])
     .then((answers) => {
         const choices = answers.Options;      
-        //const { choices } = answers.Options; console.log(answers)
         if (choices === 'view all departments'){
             queryDepartments();
         }
@@ -138,7 +137,7 @@ const addRole = () => {
        connection.query(roleQuery, (err, data) => {
         if (err) throw err;
 
-        const dept = data.map(({ id , name }) => ({ name: name, value: id}));
+        const dept = data.map(({ id , department_name }) => ({ name: department_name, value: id}));
         inquirer.prompt([
         {
             type: 'list',
