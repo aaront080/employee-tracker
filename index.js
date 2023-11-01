@@ -152,5 +152,68 @@ addRole = () => {
             })
         })
        })
-    })}
+    })
+}
+
+addEmployee = () => {
+    inquirer.prompt([
+        {
+            type: 'input',
+            name: 'firstName',
+            message: "Please enter the employee's first name",
+        }
+        {
+            type: 'input',
+            name: 'lastName',
+            message: "Please enter the employee's last name",
+        }
+    ])
+    .then(answer => {
+        const params = [answer.firstName, answer.lastName]
+        const roleQuery = `SELECT role.id, role.title FROM role`;
+        connection.promise().query(roleQuery, (err, data) => {
+            if (err) throw err;
+            const roles = data.map(({ id, title }) => ({ name: title, value: id}));
+            inquirer.prompt([
+                {
+                    type: 'list',
+                    name: 'role',
+                    message: "Please enter the employee's role",
+                    choices: roles
+                }
+            ])
+            .then(rolechoice => {
+                const role = rolechoice.role;
+                params.push(role);
+                const managerQuery = `SELECT * FROm employee`;
+                connection.promise().query(managerQuery, (err, data) => {
+                    if (err) throw err;
+                    const managers = data.map(({ id, first_name, last_name}) => ({ name: first_name + " " + last_name, value: id }));
+
+                    inquirer.prompt([
+                        {
+                            type: 'list',
+                            name: 'manager',
+                            message: "Please enter the employee's manager name.",
+                            choices: managers
+                        }
+                    ])
+                    .then(managerChoice => {
+                        const manager = managerChoice.manager;
+                        params.push(manager);
+
+                        const newQuery = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                            VALUES (?, ?, ?, ?)`;
+
+                        connection.query(newQuery, params, (err, result) => {
+                        if (err) throw err;
+                        console.log('Employee added.')
+
+                        queryEmployees();
+                        })
+                    })
+                })
+            })
+        })
+    })
 }
