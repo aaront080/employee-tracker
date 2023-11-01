@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 const mysql = require('mysql2');
+//const express = require('express')
 
 
 const connection = mysql.createConnection({
@@ -14,6 +15,8 @@ const connection = mysql.createConnection({
 
 connection.connect(err => {
     if (err) throw (err);
+    console.log('connected')
+    userOptions()
 });
 
 const userOptions = () =>{
@@ -22,18 +25,20 @@ const userOptions = () =>{
             type: 'list',
             name: 'Options',
             message: 'Please make a selection.',
-            choices: ['view all departments',
+            choices: [
+                    'view all departments',
                     'view all roles',
                     'view all employees',
                     'add a department',
                     'add a role',
                     'add an employee',
                     'update an employee role',
-        ]
+             ],
         }
     ])
     .then((answers) => {
-        const { choices } = answers;
+        const choices = answers.Options;      
+        //const { choices } = answers.Options; console.log(answers)
         if (choices === 'view all departments'){
             queryDepartments();
         }
@@ -58,7 +63,7 @@ const userOptions = () =>{
     })
 }
 
-queryDepartments = () => {
+const queryDepartments = () => {
     console.log('Now viewing all departments:\n');
     const sql = `SELECT department.id AS id, department.department_name AS department FROM department`;
     connection.query(sql, (err, response) => {
@@ -68,7 +73,7 @@ queryDepartments = () => {
     });
 };
 
-queryRole = () => {
+const queryRoles = () => {
     console.log('Now viewing all roles:\n');
     const sql = `SELECT roles.id, roles.title, department.department_name AS department
     FROM roles INNER JOIN department ON roles.department_id = department.id`;
@@ -79,7 +84,7 @@ queryRole = () => {
     }) 
 };
 
-queryEmployees = () => {
+const queryEmployees = () => {
     console.log('Now viewing all employees:\n');
     const sql = `SELECT employee.id,
                 employee.first_name,
@@ -97,7 +102,7 @@ queryEmployees = () => {
     })                
 ;}
 
-addDepartment = () => {
+const addDepartment = () => {
     inquirer.prompt([
         {
             type: 'input',
@@ -115,7 +120,7 @@ addDepartment = () => {
     })
 }
 
-addRole = () => {
+const addRole = () => {
     inquirer.prompt([
         {
             type: 'input',
@@ -133,7 +138,7 @@ addRole = () => {
        connection.query(roleQuery, (err, data) => {
         if (err) throw err;
 
-        const dept = data.map(({ id , department_name }) => ({ name: department_name, value: id}));
+        const dept = data.map(({ id , name }) => ({ name: name, value: id}));
         inquirer.prompt([
         {
             type: 'list',
@@ -159,7 +164,7 @@ addRole = () => {
     })
 }
 
-addEmployee = () => {
+const addEmployee = () => {
     inquirer.prompt([
         {
             type: 'input',
@@ -222,7 +227,7 @@ addEmployee = () => {
     })
 }
 
-updateEmployee = () => {
+const updateEmployee = () => {
     const updateQuery = `SELECT * FROM employee`;
     connection.query(updateQuery, (err, data) => {
         if (err) throw err;
