@@ -1,15 +1,16 @@
 const inquirer = require('inquirer');
 const cTable = require('console.table');
-const mysql = require('mysql');
+const mysql = require('mysql2');
+
 
 const connection = mysql.createConnection({
     host: 'localhost',
-    port: 3001,
+    port: 3306,
     user: 'root',
     password: '1350Southh90!',
     database: 'employee_db'
 });
-const PORT = 3001
+
 
 connection.connect(err => {
     if (err) throw (err);
@@ -31,8 +32,8 @@ const userOptions = () =>{
         ]
         }
     ])
-    .then((responses) => {
-        const { choices } = responses;
+    .then((answers) => {
+        const { choices } = answers;
         if (choices === 'view all departments'){
             queryDepartments();
         }
@@ -64,7 +65,7 @@ queryDepartments = () => {
         if (err) throw err;
         console.table(response);
         userOptions();
-    })
+    });
 };
 
 queryRole = () => {
@@ -75,7 +76,7 @@ queryRole = () => {
         if (err) throw (err);
         console.table(response);
         userOptions();
-    })
+    }) 
 };
 
 queryEmployees = () => {
@@ -104,7 +105,7 @@ addDepartment = () => {
             message: 'Please add a new department',
         }
     ])
-    .then((response) => {
+    .then(answer => {
         let sql = `INSERT INTO department (department_name) VALUES (?)`;
         connection.query(sql, answer.newDepartment, (err, response) => {
             if (err) throw err;
@@ -126,13 +127,13 @@ addRole = () => {
             name: 'salary',
             message: 'What is the salary for this new role',
         }
-    ]).then((answer) => {
+    ]).then(answer => {
        const params = [answer.role, answer.salary];
        const roleQuery = `SELECT name, id FROM department`;
-       connection.promise().query(roleQuery, (err, data) => {
+       connection.query(roleQuery, (err, data) => {
         if (err) throw err;
 
-        const dept = data.map(({ name, id }) => ({ name: name, value: id}));
+        const dept = data.map(({ id , department_name }) => ({ name: department_name, value: id}));
         inquirer.prompt([
         {
             type: 'list',
@@ -144,7 +145,7 @@ addRole = () => {
         .then(deptChoice => {
             const dept = deptChoice.dept;
             params.push(dept);
-            const newQuery = `INSERT INTO role (title, salary, department_id)
+            const newQuery = `INSERT INTO roles (title, salary, department_id)
                             VALUES (?, ?, ?)`;
 
             connection.query(newQuery, params, (err, result) => {
@@ -173,8 +174,8 @@ addEmployee = () => {
     ])
     .then(answer => {
         const params = [answer.firstName, answer.lastName]
-        const roleQuery = `SELECT role.id, role.title FROM role`;
-        connection.promise().query(roleQuery, (err, data) => {
+        const roleQuery = `SELECT roles.id, roles.title FROM roles`;
+        connection.query(roleQuery, (err, data) => {
             if (err) throw err;
             const roles = data.map(({ id, title }) => ({ name: title, value: id}));
             inquirer.prompt([
@@ -189,7 +190,7 @@ addEmployee = () => {
                 const role = rolechoice.role;
                 params.push(role);
                 const managerQuery = `SELECT * FROm employee`;
-                connection.promise().query(managerQuery, (err, data) => {
+                connection.query(managerQuery, (err, data) => {
                     if (err) throw err;
                     const managers = data.map(({ id, first_name, last_name}) => ({ name: first_name + " " + last_name, value: id }));
 
@@ -220,3 +221,55 @@ addEmployee = () => {
         })
     })
 }
+
+updateEmployee = () => {
+    const updateQuery = `SELECT * FROM employee`;
+    connection.query(updateQuery, (err, data) => {
+        if (err) throw err;
+
+        const employees  = data.map(({ id, first_name, last_name}) => ({ name: first_name + " " + last_name, value: id}));
+        inquirer.prompt([
+            {
+                type: 'list',
+                name: 'update',
+                message: "Please select the employee you would like to update.",
+                choices: employees
+            }
+        ])
+        .then(employeeChoice => {
+            const employee = employeeChoice.update;
+            const params = [];
+            params.push(employee);
+
+            const roleQuery = `SELECT * FROM roles`;
+            connection.query(roleQuery, (err, data) => {
+                if (err) throw err;
+                const roles = data.map(({ id, title }) => ({ name:title, value: id}));
+                inquirer.prompt([
+                    {
+                        type: 'list',
+                        name: 'role',
+                        message: "Please select the employees new role.",
+                        choices: roles
+                    }
+                ])
+                .then(roleChoice => {
+                    const role = roleChoice.role;
+                    params.push(role);
+                    let employee = params[0]
+                    params[0] = role
+                    params[1] = employee
+
+                    const queryChoice = `UPDATE employee SET role_id = ? WHERE id = ?`;
+                    connection.query(queryChoice, params, (err, result) => {
+                        if (err) throw err;
+                        console.log("Employee has been updated.");
+
+                        queryEmployees()
+                    })
+                })
+            })
+        })
+    })
+}
+
