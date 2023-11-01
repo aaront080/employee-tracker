@@ -51,6 +51,9 @@ const userOptions = () =>{
         if (choices === 'add an employee'){
             addEmployee();
         }
+        if (choices === 'update an employee role'){
+            updateEmployee()
+        }
     })
 }
 
@@ -161,7 +164,7 @@ addEmployee = () => {
             type: 'input',
             name: 'firstName',
             message: "Please enter the employee's first name",
-        }
+        },
         {
             type: 'input',
             name: 'lastName',
